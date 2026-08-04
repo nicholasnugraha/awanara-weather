@@ -8,8 +8,9 @@ import { WeatherDetailsGrid } from "@/components/weather/weather-details-grid";
 import { SearchBar } from "@/components/weather/search-bar";
 import { ThemeToggle } from "@/components/weather/theme-toggle";
 import type { Theme } from "@/components/theme/theme-provider";
+import { weatherService } from "@/services/weather-service";
 
-interface BFFData {
+export interface WeatherData {
   location: {
     lat: number;
     lon: number;
@@ -29,78 +30,87 @@ interface BFFData {
     dt: number;
     temp: number;
     description: string;
-    icon?: string;
   }>;
   daily: Array<{
     dt: number;
-    temp: {
-      min: number;
-      max: number;
-    };
+    temp: { min: number; max: number };
     description: string;
-    icon?: string;
   }>;
 }
 
 export const DashboardContainer = ({ theme }: { theme: Theme }) => {
-  const [data, setData] = useState<BFFData | null>(null);
+  const [data, setData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [city, setCity] = useState("Jakarta, ID");
+  const [coords, setCoords] = useState({ lat: 0.7893, lon: 106.65 }); // Default Jakarta
 
-  // Fetch weather data from BFF
+  // Fetch weather data from BFF when coordinates change
   useEffect(() => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
-        
-        // Mock data for initial load (replace with actual BFF call later)
-        const mockData: BFFData = {
-          location: { lat: 0.7893, lon: 106.65, timezone: "Asia/Jakarta" },
+        setError(null);
+
+        // Call BFF API with coordinates
+        const result = await weatherService.fetchWeather(coords.lat, coords.lon);
+
+        if (result.error) {
+          throw new Error(result.error);
+        }
+
+        if (!result.data) {
+          throw new Error("No data received from API");
+        }
+
+        // Transform BFF response to our format
+        const transformedData: WeatherData = {
+          location: result.data.location,
           fetchedAt: Date.now(),
           current: {
-            temp: 32,
-            description: "Cerah Berawan",
-            humidity: 75,
-            wind_speed: 12,
-            pressure: 1010,
-            visibility: 10,
-            uvi: 8.5,
+            temp: result.data.current.temp,
+            description: result.data.current.description.charAt(0).toUpperCase() + result.data.current.description.slice(1),
+            humidity: result.data.current.humidity,
+            wind_speed: result.data.current.wind_speed,
+            pressure: result.data.current.pressure,
+            visibility: result.data.current.visibility,
+            uvi: result.data.current.uvi,
           },
-          hourly: [
-            { dt: Date.now() + 3600, temp: 33, description: "Cerah" },
-            { dt: Date.now() + 7200, temp: 34, description: "Cerah" },
-            { dt: Date.now() + 10800, temp: 33, description: "Berawan" },
-            { dt: Date.now() + 14400, temp: 31, description: "Berawan" },
-            { dt: Date.now() + 18000, temp: 30, description: "Hujan Ringan" },
-          ],
-          daily: [
-            { dt: Date.now(), temp: { min: 24, max: 33 }, description: "Cerah Berawan" },
-            { dt: Date.now() + 86400, temp: { min: 23, max: 32 }, description: "Cerah" },
-            { dt: Date.now() + 172800, temp: { min: 24, max: 34 }, description: "Cerah" },
-            { dt: Date.now() + 259200, temp: { min: 25, max: 33 }, description: "Berawan" },
-          ],
+          hourly: result.data.hourly.map((hour: any) => ({
+            dt: hour.dt * 1000, // Convert Unix timestamp
+            temp: hour.temp,
+            description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
+          })),
+          daily: result.data.daily.map((day: any) => ({
+            dt: day.dt * 1000, // Convert Unix timestamp
+            temp: { min: day.temp.min, max: day.temp.max },
+            description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
+          })),
         };
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setData(mockData);
-        setError(null);
+        setData(transformedData);
       } catch (err) {
         console.error("Failed to fetch weather:", err);
-        setError("Gagal memuat data cuaca. Silakan coba lagi.");
+        setError(err instanceof Error ? err.message : "Failed to load weather data");
       } finally {
         setLoading(false);
       }
     };
 
     fetchWeather();
-  }, []);
+  }, [coords]);
 
-  const handleCitySelect = (selectedCity: string) => {
+  const handleCitySelect = async (selectedCity: string) => {
     setCity(selectedCity);
-    // In production: trigger refetch with new city coordinates
+    
+    // Geocode and then fetch weather
+    const geoResult = await weatherService.geocodeCity(selectedCity);
+    
+    if (geoResult.lat && geoResult.lon) {
+      setCoords({ lat: geoResult.lat, lon: geoResult.lon });
+    } else {
+      setError("Kota tidak ditemukan. Silakan coba lagi.");
+    }
   };
 
   const formatTime = (dt: number): string => {
@@ -111,7 +121,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   const formatDate = (dt: number): string => {
     const date = new Date(dt);
     const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    return days[date.getDay()]!; // Days array always has valid index
+    return days[date.getDay()]!;
   };
 
   if (loading) {
@@ -202,7 +212,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
               minTemp={day.temp.min}
               maxTemp={day.temp.max}
               condition={day.description}
-              icon={day.icon || "01d"}
+              icon="01d"
             />
           ))}
         </div>
