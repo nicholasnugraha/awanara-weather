@@ -15,9 +15,11 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
-    command: "pnpm start", // Gunakan production server yang sudah jalan
+    // Build production + start server in one command
+    command: "pnpm exec playwright install chromium && pnpm build && pnpm start",
     url: "http://localhost:3000",
-    reuseExistingServer: true, // Reuse existing Next.js dev server
-    timeout: 60_000,
+    reuseExistingServer: false, // Fresh start each time
+    timeout: 240_000, // Increased for build + start
+    stderr: [],
   },
 });
