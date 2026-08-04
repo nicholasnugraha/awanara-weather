@@ -7,52 +7,24 @@ import { DailyForecastCard } from "@/components/weather/daily-forecast-card";
 import { WeatherDetailsGrid } from "@/components/weather/weather-details-grid";
 import { SearchBar } from "@/components/weather/search-bar";
 import { ThemeToggle } from "@/components/weather/theme-toggle";
+import { HeroSkeleton, MetricCardSkeleton, HourlyForecastStripSkeleton, DailyForecastCardSkeleton } from "@/components/ui/skeleton";
 import type { Theme } from "@/components/theme/theme-provider";
+import type { WeatherData } from "@/types/weather-data";
 import { weatherService } from "@/services/weather-service";
-
-export interface WeatherData {
-  location: {
-    lat: number;
-    lon: number;
-    timezone: string;
-  };
-  fetchedAt: number;
-  current: {
-    temp: number;
-    description: string;
-    humidity: number;
-    wind_speed: number;
-    pressure: number;
-    visibility: number;
-    uvi?: number;
-  };
-  hourly: Array<{
-    dt: number;
-    temp: number;
-    description: string;
-  }>;
-  daily: Array<{
-    dt: number;
-    temp: { min: number; max: number };
-    description: string;
-  }>;
-}
 
 export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   const [data, setData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [city, setCity] = useState("Jakarta, ID");
-  const [coords, setCoords] = useState({ lat: 0.7893, lon: 106.65 }); // Default Jakarta
+  const [coords, setCoords] = useState({ lat: 0.7893, lon: 106.65 });
 
-  // Fetch weather data from BFF when coordinates change
   useEffect(() => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        // Call BFF API with coordinates
+        
         const result = await weatherService.fetchWeather(coords.lat, coords.lon);
 
         if (result.error) {
@@ -63,7 +35,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
           throw new Error("No data received from API");
         }
 
-        // Transform BFF response to our format
         const transformedData: WeatherData = {
           location: result.data.location,
           fetchedAt: Date.now(),
@@ -76,13 +47,13 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
             visibility: result.data.current.visibility,
             uvi: result.data.current.uvi,
           },
-          hourly: result.data.hourly.map((hour: any) => ({
-            dt: hour.dt * 1000, // Convert Unix timestamp
+          hourly: result.data.hourly.map((hour) => ({
+            dt: hour.dt * 1000,
             temp: hour.temp,
             description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
           })),
           daily: result.data.daily.map((day: any) => ({
-            dt: day.dt * 1000, // Convert Unix timestamp
+            dt: day.dt * 1000,
             temp: { min: day.temp.min, max: day.temp.max },
             description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
           })),
@@ -103,7 +74,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   const handleCitySelect = async (selectedCity: string) => {
     setCity(selectedCity);
     
-    // Geocode and then fetch weather
     const geoResult = await weatherService.geocodeCity(selectedCity);
     
     if (geoResult.lat && geoResult.lon) {
@@ -124,17 +94,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
     return days[date.getDay()]!;
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500 mx-auto" />
-          <p className="mt-4 text-text-muted">Memuat data cuaca...</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error || !data) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -151,9 +110,46 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
     );
   }
 
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-surface p-4 md:p-6">
+        <header className="mb-6 space-y-4">
+          <SearchBar onCitySelect={handleCitySelect} />
+          <div className="h-8 w-64 animate-pulse rounded bg-surface-container" />
+        </header>
+
+        <section className="mb-6">
+          <HeroSkeleton />
+        </section>
+
+        <section className="mb-6">
+          <h2 className="mb-3 h-6 w-40 rounded bg-surface-container" />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <MetricCardSkeleton key={i} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <h2 className="mb-3 h-6 w-52 rounded bg-surface-container" />
+          <HourlyForecastStripSkeleton />
+        </section>
+
+        <section>
+          <h2 className="mb-3 h-6 w-64 rounded bg-surface-container" />
+          <div className="space-y-2">
+            {[...Array(4)].map((_, i) => (
+              <DailyForecastCardSkeleton key={i} />
+            ))}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-surface p-4 md:p-6">
-      {/* Header */}
       <header className="mb-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar onCitySelect={handleCitySelect} />
@@ -161,14 +157,12 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
           <ThemeToggle currentTheme={theme} onToggle={() => {}} />
         </div>
         
-        {/* Current Location & Timestamp */}
         <div className="mt-4 flex items-center justify-between text-sm text-text-muted">
           <span>{city}</span>
           <span>Diperbarui: {new Date(data.fetchedAt).toLocaleTimeString()}</span>
         </div>
       </header>
 
-      {/* Hero Section */}
       <section className="mb-6">
         <CurrentWeatherHero 
           temperature={data.current.temp}
@@ -177,7 +171,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         />
       </section>
 
-      {/* Details Grid */}
       <section className="mb-6">
         <h2 className="mb-3 text-lg font-semibold text-text">Detail Cuaca</h2>
         <WeatherDetailsGrid
@@ -189,7 +182,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         />
       </section>
 
-      {/* Hourly Forecast */}
       <section className="mb-6">
         <h2 className="mb-3 text-lg font-semibold text-text">Jaman Berikutnya</h2>
         <HourlyForecastStrip 
@@ -201,7 +193,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         />
       </section>
 
-      {/* Daily Forecast */}
       <section>
         <h2 className="mb-3 text-lg font-semibold text-text">Prakiraan 4 Hari</h2>
         <div className="space-y-2">
