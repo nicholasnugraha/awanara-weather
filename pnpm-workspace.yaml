@@ -1,0 +1,9 @@
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - unrs-resolver
+
+# Samakan playwright-core dengan @playwright/test 1.60.0 agar tipe
+# @axe-core/playwright tidak mismatch (lihat error TS2739 di e2e/a11y).
+overrides:
+  playwright-core: 1.60.0

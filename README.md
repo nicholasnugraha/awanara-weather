@@ -34,3 +34,23 @@ Workspace dokumentasi awal. Source code dan repository GitHub belum dibuat.
 ## Secret
 
 Jangan menaruh API key di dokumen, source code, issue, PR, log, screenshot, atau chat. Salin `.env.example` menjadi `.env.local` ketika implementasi dimulai.
+
+## Development
+
+```bash
+pnpm install        # install dependencies
+pnpm dev            # jalankan dev server di http://localhost:3000
+```
+
+Quality gates (wajib lolos sebelum PR):
+
+```bash
+pnpm typecheck      # TypeScript strict
+pnpm lint           # ESLint
+pnpm test           # unit tests (Vitest)
+pnpm test:e2e       # E2E (Playwright)
+pnpm test:a11y      # Accessibility (axe, WCAG 2.2 AA)
+pnpm build          # production build
+```
+
+Stack: Next.js App Router · React · TypeScript strict · Tailwind CSS · Vitest · Playwright · pnpm · GitHub Actions.

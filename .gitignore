@@ -1,21 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Build outputs
+build/
+dist/
+*.tsbuildinfo
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Storybook
+storybook-static/
+
 # Environment secrets
 .env
 .env.local
 .env.*.local
 !.env.example
 
-# Dependencies and build outputs
-node_modules/
-.next/
-out/
-build/
-coverage/
-playwright-report/
-test-results/
-storybook-static/
-
-# Logs and local files
+# Logs
 *.log
+npm-debug.log*
+
+# OS / editor
 .DS_Store
 Thumbs.db
 .vercel/

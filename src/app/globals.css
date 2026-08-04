@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-brand-700: #00629d;
+  --color-brand-500: #00a3ff;
+  --color-surface: #f7f9ff;
+  --color-surface-card: #ffffff;
+  --color-text: #171c22;
+  --color-border: #bec7d4;
+  --color-sunny: #ffb800;
+  --color-storm: #7b61ff;
+  --color-precip: #00d1ff;
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-lg: 1.5rem;
+  --content-max: 75rem;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
