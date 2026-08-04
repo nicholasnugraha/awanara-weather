@@ -15,11 +15,10 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
-    // Build production + start server in one command
-    command: "pnpm exec playwright install chromium && pnpm build && pnpm start",
+    // Build production and start server
+    command: "pnpm build && pnpm start",
     url: "http://localhost:3000",
-    reuseExistingServer: false, // Fresh start each time
-    timeout: 240_000, // Increased for build + start
-    stderr: [],
+    reuseExistingServer: false,
+    timeout: 240_000, // Extended for full build+start cycle in CI
   },
 });
