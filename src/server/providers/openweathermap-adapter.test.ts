@@ -31,7 +31,7 @@ describe("parseZod", () => {
     
     expect(parsed.data.length).toBe(1);
     expect(parsed.timezone).toBe("Asia/Jakarta");
-    expect(parsed.data[0].pop).toBe(0.1);
+    expect(parsed.data[0]?.pop).toBe(0.1); // Non-null assertion untuk avoid TS2532
   });
 
   it("reject schema invalid (missing required field)", () => {
