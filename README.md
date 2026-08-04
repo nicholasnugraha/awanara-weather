@@ -53,4 +53,8 @@ pnpm test:a11y      # Accessibility (axe, WCAG 2.2 AA)
 pnpm build          # production build
 ```
 
+## Progress
+
+Screenshot perkembangan aplikasi per fase ada di [`screenshots/`](screenshots/README.md).
+
 Stack: Next.js App Router · React · TypeScript strict · Tailwind CSS · Vitest · Playwright · pnpm · GitHub Actions.
