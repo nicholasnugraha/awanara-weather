@@ -9,16 +9,16 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
-    // Lokal: pakai Edge sistem (tanpa download browser). CI: chromium bawaan.
     channel: process.env.CI ? undefined : "msedge",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
-    command: "pnpm dev",
+    // Build production and start server
+    command: "pnpm build && pnpm start",
     url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    reuseExistingServer: false,
+    timeout: 240_000, // Extended for full build+start cycle in CI
   },
 });

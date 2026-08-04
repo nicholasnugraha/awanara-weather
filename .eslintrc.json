@@ -1,0 +1,16 @@
+{
+  "root": true,
+  "extends": ["next/core-web-vitals", "eslint-config-next"],
+  "ignorePatterns": [
+    "node_modules/**",
+    ".next/**",
+    "playwright-report/**",
+    "test-results/**",
+    "coverage/**",
+    "storybook-static/**"
+  ],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off",
+    "no-unused-vars": "off"
+  }
+}
