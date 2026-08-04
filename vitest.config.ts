@@ -1,11 +1,8 @@
-import type { UserConfig } from "vitest/config";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default {
+export default defineConfig({
+  plugins: [react()],
   test: {
     environment: "jsdom",
     globals: true,
@@ -13,9 +10,4 @@ export default {
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     exclude: ["e2e/**", "node_modules/**"],
   },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },
-} satisfies UserConfig;
+});
