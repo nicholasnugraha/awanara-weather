@@ -68,17 +68,17 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
             uvi: 8.5,
           },
           hourly: [
-            { dt: Date.now() + 3600, temp: 33, description: "Cerah", icon: "01d" },
-            { dt: Date.now() + 7200, temp: 34, description: "Cerah", icon: "01d" },
-            { dt: Date.now() + 10800, temp: 33, description: "Berawan", icon: "02d" },
-            { dt: Date.now() + 14400, temp: 31, description: "Berawan", icon: "03d" },
-            { dt: Date.now() + 18000, temp: 30, description: "Hujan Ringan", icon: "10d" },
+            { dt: Date.now() + 3600, temp: 33, description: "Cerah" },
+            { dt: Date.now() + 7200, temp: 34, description: "Cerah" },
+            { dt: Date.now() + 10800, temp: 33, description: "Berawan" },
+            { dt: Date.now() + 14400, temp: 31, description: "Berawan" },
+            { dt: Date.now() + 18000, temp: 30, description: "Hujan Ringan" },
           ],
           daily: [
-            { dt: Date.now(), temp: { min: 24, max: 33 }, description: "Cerah Berawan", icon: "02d" },
-            { dt: Date.now() + 86400, temp: { min: 23, max: 32 }, description: "Cerah", icon: "01d" },
-            { dt: Date.now() + 172800, temp: { min: 24, max: 34 }, description: "Cerah", icon: "01d" },
-            { dt: Date.now() + 259200, temp: { min: 25, max: 33 }, description: "Berawan", icon: "03d" },
+            { dt: Date.now(), temp: { min: 24, max: 33 }, description: "Cerah Berawan" },
+            { dt: Date.now() + 86400, temp: { min: 23, max: 32 }, description: "Cerah" },
+            { dt: Date.now() + 172800, temp: { min: 24, max: 34 }, description: "Cerah" },
+            { dt: Date.now() + 259200, temp: { min: 25, max: 33 }, description: "Berawan" },
           ],
         };
 
@@ -111,7 +111,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   const formatDate = (dt: number): string => {
     const date = new Date(dt);
     const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    return days[date.getDay()];
+    return days[date.getDay()]!; // Days array always has valid index
   };
 
   if (loading) {
