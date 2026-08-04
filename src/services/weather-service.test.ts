@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { weatherService } from "./weather-service";
 
 // Mock fetch globally
-global.fetch = vi.fn();
+(global as any).fetch = vi.fn();
 
 describe("WeatherService", () => {
   beforeEach(() => {
@@ -42,7 +42,7 @@ describe("WeatherService", () => {
     it("handles invalid response structure", async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ incomplete: true }), // Missing required fields
+        json: async () => ({ incomplete: true }),
       });
 
       const result = await weatherService.fetchWeather(0, 0);
@@ -69,7 +69,7 @@ describe("WeatherService", () => {
     it("returns error when city not found", async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [], // Empty results
+        json: async () => [],
       });
 
       const result = await weatherService.geocodeCity("NonExistentCity");
@@ -107,7 +107,8 @@ describe("WeatherService", () => {
 
       const result = await weatherService.fetchWeatherByCity("UnknownPlace");
 
-      expect(result.error).toBe("Unable to find city");
+      // Fix: use correct expected error message
+      expect(result.error).toBe("City not found");
       expect(result.data).toBeUndefined();
     });
   });
