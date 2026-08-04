@@ -1,8 +1,7 @@
-import OpenWeatherMapAdapter from "./openweathermap-adapter";
 import { parseZod } from "../schemas/error-mapping";
 import { HourlyForecastSchema } from "../schemas/weather-schemas";
 
-describe("OpenWeatherMapAdapter", () => {
+describe("parseZod", () => {
   const mockHourly = {
     lat: 0.1,
     lon: -98.5,
@@ -27,11 +26,8 @@ describe("OpenWeatherMapAdapter", () => {
   };
 
   it("parse hourly dengan Zod valid", () => {
-    // Mock axios globally
-    vi.mock("axios");
-    
     // Note: actual test would require full mocking; here we verify parse logic directly
-    const parsed = parseZod(mockHourly, HourlyForecastSchema);
+    const parsed = parseZod(mockHourly as unknown, HourlyForecastSchema);
     
     expect(parsed.data.length).toBe(1);
     expect(parsed.timezone).toBe("Asia/Jakarta");
@@ -39,9 +35,9 @@ describe("OpenWeatherMapAdapter", () => {
   });
 
   it("reject schema invalid (missing required field)", () => {
-    const badData: any = { ...mockHourly };
-    delete badData.data; // missing required data array
+    const badData: Record<string, unknown> = { ...mockHourly };
+    delete (badData as any).data; // missing required data array
     
-    expect(() => parseZod(badData, HourlyForecastSchema)).toThrow(/PARSE_ERROR/i);
+    expect(() => parseZod(badData as unknown, HourlyForecastSchema)).toThrow(/PARSE_ERROR/i);
   });
 });
