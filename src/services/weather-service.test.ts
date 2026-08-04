@@ -7,6 +7,12 @@ import { weatherService } from "./weather-service";
 describe("WeatherService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear console error spies
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   describe("fetchWeather", () => {
@@ -107,7 +113,6 @@ describe("WeatherService", () => {
 
       const result = await weatherService.fetchWeatherByCity("UnknownPlace");
 
-      // Fix: use correct expected error message
       expect(result.error).toBe("City not found");
       expect(result.data).toBeUndefined();
     });
