@@ -9,16 +9,15 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
-    // Lokal: pakai Edge sistem (tanpa download browser). CI: chromium bawaan.
     channel: process.env.CI ? undefined : "msedge",
   },
   projects: [
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
   ],
   webServer: {
-    command: "pnpm dev",
+    command: "pnpm start", // Gunakan production server yang sudah jalan
     url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    reuseExistingServer: true, // Reuse existing Next.js dev server
+    timeout: 60_000,
   },
 });
