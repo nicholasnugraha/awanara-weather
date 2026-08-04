@@ -9,15 +9,13 @@ interface DailyForecastCardProps {
   minTemp: number;
   maxTemp: number;
   condition: string;
-  icon: string;
 }
 
 export const DailyForecastCard: FC<DailyForecastCardProps> = ({ 
   date, 
   minTemp, 
   maxTemp, 
-  condition,
-  icon
+  condition 
 }) => {
   // Simple color coding based on temperature range
   const getTempColor = (temp: number) => {

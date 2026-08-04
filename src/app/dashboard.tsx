@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CurrentWeatherHero } from "@/components/weather/current-weather-hero";
 import { HourlyForecastStrip } from "@/components/weather/hourly-forecast-strip";
 import { DailyForecastCard } from "@/components/weather/daily-forecast-card";
@@ -9,79 +9,63 @@ import { SearchBar } from "@/components/weather/search-bar";
 import { ThemeToggle } from "@/components/weather/theme-toggle";
 import { HeroSkeleton, MetricCardSkeleton, HourlyForecastStripSkeleton, DailyForecastCardSkeleton } from "@/components/ui/skeleton";
 import type { Theme } from "@/components/theme/theme-provider";
+import { useWeatherData } from "@/hooks/use-weather";
 import type { WeatherData } from "@/types/weather-data";
-import { weatherService } from "@/services/weather-service";
 
 export const DashboardContainer = ({ theme }: { theme: Theme }) => {
-  const [data, setData] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [city, setCity] = useState("Jakarta, ID");
   const [coords, setCoords] = useState({ lat: 0.7893, lon: 106.65 });
-
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const result = await weatherService.fetchWeather(coords.lat, coords.lon);
-
-        if (result.error) {
-          throw new Error(result.error);
-        }
-
-        if (!result.data) {
-          throw new Error("No data received from API");
-        }
-
-        const transformedData: WeatherData = {
-          location: result.data.location,
-          fetchedAt: Date.now(),
-          current: {
-            temp: result.data.current.temp,
-            description: result.data.current.description.charAt(0).toUpperCase() + result.data.current.description.slice(1),
-            humidity: result.data.current.humidity,
-            wind_speed: result.data.current.wind_speed,
-            pressure: result.data.current.pressure,
-            visibility: result.data.current.visibility,
-            uvi: result.data.current.uvi,
-          },
-          hourly: result.data.hourly.map((hour) => ({
-            dt: hour.dt * 1000,
-            temp: hour.temp,
-            description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
-          })),
-          daily: result.data.daily.map((day: any) => ({
-            dt: day.dt * 1000,
-            temp: { min: day.temp.min, max: day.temp.max },
-            description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
-          })),
-        };
-
-        setData(transformedData);
-      } catch (err) {
-        console.error("Failed to fetch weather:", err);
-        setError(err instanceof Error ? err.message : "Failed to load weather data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeather();
-  }, [coords]);
+  
+  // Use SWR for data fetching with automatic caching & revalidation
+  const { weather: bffData, loading, error, reload } = useWeatherData(
+    coords.lat, 
+    coords.lon
+  );
 
   const handleCitySelect = async (selectedCity: string) => {
     setCity(selectedCity);
     
-    const geoResult = await weatherService.geocodeCity(selectedCity);
+    const response = await fetch(`/api/geocode?q=${encodeURIComponent(selectedCity)}&limit=1`);
+    if (!response.ok) return;
     
-    if (geoResult.lat && geoResult.lon) {
-      setCoords({ lat: geoResult.lat, lon: geoResult.lon });
+    const results = await response.json();
+    if (results && results.length > 0) {
+      setCoords({ lat: results[0].lat, lon: results[0].lon });
     } else {
-      setError("Kota tidak ditemukan. Silakan coba lagi.");
+      alert("Kota tidak ditemukan");
     }
   };
+
+  // Transform BFF data to our format
+  const transformData = (bffData: any): WeatherData | null => {
+    if (!bffData) return null;
+    
+    return {
+      location: bffData.location,
+      fetchedAt: Date.now(),
+      current: {
+        temp: bffData.current.temp,
+        description: bffData.current.description.charAt(0).toUpperCase() + bffData.current.description.slice(1),
+        humidity: bffData.current.humidity,
+        wind_speed: bffData.current.wind_speed,
+        pressure: bffData.current.pressure,
+        visibility: bffData.current.visibility,
+        uvi: bffData.current.uvi,
+      },
+      hourly: bffData.hourly.map((hour: any) => ({
+        dt: hour.dt * 1000,
+        temp: hour.temp,
+        description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
+      })),
+      daily: bffData.daily.map((day: any) => ({
+        dt: day.dt * 1000,
+        temp: { min: day.temp.min, max: day.temp.max },
+        description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
+      })),
+    };
+  };
+
+  const data = transformData(bffData);
 
   const formatTime = (dt: number): string => {
     const date = new Date(dt);
@@ -100,7 +84,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         <div className="text-center">
           <p className="text-danger mb-4">{error || "Error loading weather data"}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={reload}
             className="rounded-lg bg-brand-500 px-6 py-3 text-white hover:bg-brand-600 transition-colors"
           >
             Coba Lagi
@@ -139,8 +123,8 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         <section>
           <h2 className="mb-3 h-6 w-64 rounded bg-surface-container" />
           <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <DailyForecastCardSkeleton key={i} />
+            {[...Array(4)].map((_: unknown, index: number) => (
+              <DailyForecastCardSkeleton key={index} />
             ))}
           </div>
         </section>
@@ -203,7 +187,6 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
               minTemp={day.temp.min}
               maxTemp={day.temp.max}
               condition={day.description}
-              icon="01d"
             />
           ))}
         </div>
