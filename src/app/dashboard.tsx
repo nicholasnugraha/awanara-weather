@@ -80,17 +80,18 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
 
   if (error || !data) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <main className="flex min-h-screen items-center justify-center bg-surface p-4">
         <div className="text-center">
-          <p className="text-danger mb-4">{error || "Error loading weather data"}</p>
+          <h1 className="mb-2 text-2xl font-bold text-text">Cuaca, dalam genggaman</h1>
+          <p className="mb-4 text-danger">{error || "Gagal memuat data cuaca."}</p>
           <button
             onClick={reload}
-            className="rounded-lg bg-brand-500 px-6 py-3 text-white hover:bg-brand-600 transition-colors"
+            className="rounded-lg bg-nav-active px-6 py-3 font-medium text-on-nav-active transition-colors hover:bg-brand-700"
           >
             Coba Lagi
           </button>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -98,6 +99,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
     return (
       <main className="min-h-screen bg-surface p-4 md:p-6">
         <header className="mb-6 space-y-4">
+          <h1 className="text-2xl font-bold text-text">Cuaca, dalam genggaman</h1>
           <SearchBar onCitySelect={handleCitySelect} />
           <div className="h-8 w-64 animate-pulse rounded bg-surface-container" />
         </header>
@@ -135,6 +137,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   return (
     <main className="min-h-screen bg-surface p-4 md:p-6">
       <header className="mb-6">
+        <h1 className="mb-4 text-2xl font-bold text-text">Cuaca, dalam genggaman</h1>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar onCitySelect={handleCitySelect} />
           
