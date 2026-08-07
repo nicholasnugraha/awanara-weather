@@ -1,6 +1,16 @@
 import { z } from "zod";
 
 /**
+ * Presipitasi: OpenWeatherMap tidak konsisten antar-endpoint.
+ * - /timeline/1h  -> object volume, mis. {"1h": 0.47}
+ * - /timeline/1day -> number, mis. 0.46
+ * Skema ini menerima kedua bentuk agar parsing tidak pecah.
+ */
+const PrecipitationSchema = z
+  .union([z.number(), z.record(z.string(), z.number())])
+  .optional();
+
+/**
  * Schema OpenWeatherMap One Call 4.0 /data/4.0/onecall/current
  * 
  * Note: field opsional = missing dari response (bukan null), bukan undefined.
@@ -59,15 +69,10 @@ export const HourlyForecastSchema = z.object({
       moonset: z.number().optional(),
       moon_phase: z.number().optional(),
       temp: z.number(),
-      feels_like: z
-        .object({
-          day: z.number().optional(),
-          night: z.number().optional(),
-          eve: z.number().optional(),
-          morn: z.number().optional(),
-        })
-        .partial()
-        .optional(),
+      // One Call 4.0 /timeline/1h mengirim feels_like sebagai number tunggal
+      // (bukan object seperti pada endpoint daily). Diverifikasi terhadap
+      // payload asli: data[].feels_like = 29.95
+      feels_like: z.number().optional(),
       pressure: z.number(),
       humidity: z.number(),
       dew_point: z.number().optional(),
@@ -85,8 +90,10 @@ export const HourlyForecastSchema = z.object({
       pop: z.number().min(0).max(1).optional(), // probability of precipitation
       clouds: z.number().optional(),
       visibility: z.number().optional(),
-      rain: z.number().optional(),
-      snow: z.number().optional(),
+      // Hourly mengirim rain/snow sebagai object volume ({"1h": 0.47}),
+      // sedangkan daily mengirim number. Terima kedua bentuk.
+      rain: PrecipitationSchema,
+      snow: PrecipitationSchema,
       uvi: z.number().optional(),
     })
   ),
@@ -145,8 +152,8 @@ export const DailyForecastSchema = z.object({
       ),
       clouds: z.number().optional(),
       pop: z.number().min(0).max(1).optional(),
-      rain: z.number().optional(),
-      snow: z.number().optional(),
+      rain: PrecipitationSchema,
+      snow: PrecipitationSchema,
       uvi: z.number().optional(),
     })
   ),

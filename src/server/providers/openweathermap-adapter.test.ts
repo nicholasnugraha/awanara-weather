@@ -11,7 +11,9 @@ describe("parseZod", () => {
       {
         dt: 1722796800,
         temp: 30.5,
-        feels_like: { day: 35.0 },
+        // Payload asli /timeline/1h: feels_like adalah number, rain adalah
+        // object volume ({"1h": n}). Fixture ini mengikuti bentuk sebenarnya.
+        feels_like: 35.0,
         pressure: 1010,
         humidity: 70,
         dew_point: 24.2,
@@ -20,7 +22,7 @@ describe("parseZod", () => {
         weather: [{ id: 800, main: "Clear", description: "sky is clear", icon: "01d" }],
         pop: 0.1,
         uvi: 12.3,
-        rain: 0,
+        rain: { "1h": 0.47 },
       },
     ],
   };

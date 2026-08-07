@@ -36,31 +36,45 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
     }
   };
 
-  // Transform BFF data to our format
+  // Transform BFF data to our format.
+  // Catatan: OpenWeatherMap menaruh deskripsi di weather[0].description,
+  // bukan langsung di objek current/hourly/daily.
+  const describe = (node: any): string => {
+    const raw = node?.weather?.[0]?.description;
+    if (typeof raw !== "string" || raw.length === 0) return "Tidak diketahui";
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  };
+
   const transformData = (bffData: any): WeatherData | null => {
-    if (!bffData) return null;
-    
+    if (!bffData?.current) return null;
+
+    // visibility dari API dalam meter; UI menampilkan km.
+    const visibilityKm =
+      typeof bffData.current.visibility === "number"
+        ? Math.round(bffData.current.visibility / 1000)
+        : 0;
+
     return {
       location: bffData.location,
       fetchedAt: Date.now(),
       current: {
-        temp: bffData.current.temp,
-        description: bffData.current.description.charAt(0).toUpperCase() + bffData.current.description.slice(1),
+        temp: Math.round(bffData.current.temp),
+        description: describe(bffData.current),
         humidity: bffData.current.humidity,
-        wind_speed: bffData.current.wind_speed,
+        wind_speed: Math.round(bffData.current.wind_speed),
         pressure: bffData.current.pressure,
-        visibility: bffData.current.visibility,
+        visibility: visibilityKm,
         uvi: bffData.current.uvi,
       },
-      hourly: bffData.hourly.map((hour: any) => ({
+      hourly: (bffData.hourly ?? []).map((hour: any) => ({
         dt: hour.dt * 1000,
-        temp: hour.temp,
-        description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
+        temp: Math.round(hour.temp),
+        description: describe(hour),
       })),
-      daily: bffData.daily.map((day: any) => ({
+      daily: (bffData.daily ?? []).map((day: any) => ({
         dt: day.dt * 1000,
-        temp: { min: day.temp.min, max: day.temp.max },
-        description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
+        temp: { min: Math.round(day.temp.min), max: Math.round(day.temp.max) },
+        description: describe(day),
       })),
     };
   };
