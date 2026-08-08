@@ -5,6 +5,9 @@ import { geocodeCity } from "@/services/geocoder";
 
 const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
 
+/**
+ * Fetch hourly forecast for a city
+ */
 export async function GET(
   req: NextRequest,
 ): Promise<NextResponse> {
@@ -26,17 +29,15 @@ export async function GET(
       country: (country ?? "ID") as string,
     });
 
-    // Use cache key based on coordinates (stable even if city names differ)
     const cache = getCache();
-    const cacheKey = `current:${location.lat}:${location.lon}`;
+    const cacheKey = `hourly:${location.lat}:${location.lon}`;
 
-    // Try cached weather data first
-    const cachedWeather = await cache.get<any>(cacheKey);
-    if (cachedWeather) {
-      return NextResponse.json(cachedWeather);
+    // Try cached data first
+    const cachedForecast = await cache.get<any>(cacheKey);
+    if (cachedForecast) {
+      return NextResponse.json(cachedForecast);
     }
 
-    // Fetch from OpenWeatherMap
     if (!OPENWEATHER_API_KEY) {
       throw new Error("OpenWeather API key not configured");
     }
@@ -49,24 +50,22 @@ export async function GET(
     });
 
     const response = await fetch(
-      `${process.env.WEATHER_BASE_URL || "https://api.openweathermap.org/data/3.0"}/weather?${params}`,
+      `${process.env.WEATHER_BASE_URL || "https://api.openweathermap.org/data/3.0"}/forecast?${params}`,
       {
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Weather API returned ${response.status}`);
+      throw new Error(`Hourly forecast API returned ${response.status}`);
     }
 
-    const weatherData = await response.json();
+    const forecastData = await response.json();
 
-    // Cache for 10 minutes (shorter than default TTL to ensure fresh data)
-    await cache.set(cacheKey, weatherData, 10 * 60 * 1000);
+    // Cache for 5 minutes
+    await cache.set(cacheKey, forecastData, 5 * 60 * 1000);
 
-    return NextResponse.json(weatherData);
+    return NextResponse.json(forecastData);
   } catch (error) {
     const { status, body } = handleError(error, 500);
     return NextResponse.json(body, { status });
