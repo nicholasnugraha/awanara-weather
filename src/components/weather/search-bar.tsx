@@ -3,7 +3,7 @@
  */
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 interface SearchResult {
   name: string;
@@ -24,8 +24,7 @@ export const SearchBar = ({ onCitySelect }: SearchBarProps) => {
   const [loading, setLoading] = useState(false);
   
   // Debounced fetch via useEffect timeout (simpler than importing debounce module)
-
-  const fetchGeocoding = async (q: string) => {
+  const fetchGeocoding = useCallback(async (q: string) => {
     try {
       setLoading(true);
       const res = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&limit=5`);
@@ -43,7 +42,7 @@ export const SearchBar = ({ onCitySelect }: SearchBarProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
