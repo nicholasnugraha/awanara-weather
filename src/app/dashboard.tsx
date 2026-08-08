@@ -16,70 +16,51 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   const [city, setCity] = useState("Jakarta, ID");
   const [coords, setCoords] = useState({ lat: 0.7893, lon: 106.65 });
   
-  // Use SWR for data fetching with automatic caching & revalidation
-  const { weather: bffData, loading, error, reload } = useWeatherData(
-    coords.lat, 
-    coords.lon
-  );
+  // Use SWR for caching & revalidation
+  const { weather, loading: apiLoading, error: apiError, reload } = useWeatherData(coords.lat, coords.lon);
+  
+  const [localData, setLocalData] = useState<WeatherData | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleCitySelect = async (selectedCity: string) => {
-    setCity(selectedCity);
-    
-    const response = await fetch(`/api/geocode?q=${encodeURIComponent(selectedCity)}&limit=1`);
-    if (!response.ok) return;
-    
-    const results = await response.json();
-    if (results && results.length > 0) {
-      setCoords({ lat: results[0].lat, lon: results[0].lon });
-    } else {
-      alert("Kota tidak ditemukan");
+  // Get toggle handler dari context (theme sebenarnya tidak dipakai karena context provider global)
+  const toggleHandler = () => {}; // Placeholder - diimplement later
+  
+  useEffect(() => {
+    if (weather) {
+      try {
+        const transformed: WeatherData = {
+          location: weather.location,
+          fetchedAt: Date.now(),
+          current: {
+            temp: weather.current.temp,
+            description: weather.current.description.charAt(0).toUpperCase() + weather.current.description.slice(1),
+            humidity: weather.current.humidity,
+            wind_speed: weather.current.wind_speed,
+            pressure: weather.current.pressure,
+            visibility: weather.current.visibility,
+            uvi: weather.current.uvi,
+          },
+          hourly: weather.hourly.map((hour) => ({
+            dt: hour.dt * 1000,
+            temp: hour.temp,
+            description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
+          })),
+          daily: weather.daily.map((day) => ({
+            dt: day.dt * 1000,
+            temp: { min: day.temp.min, max: day.temp.max },
+            description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
+          })),
+        };
+        
+        setLocalData(transformed);
+        setError(null);
+      } catch (err) {
+        setError("Failed to process weather data");
+      }
+    } else if (apiError) {
+      setError(apiError);
     }
-  };
-
-  // Transform BFF data to our format.
-  // Catatan: OpenWeatherMap menaruh deskripsi di weather[0].description,
-  // bukan langsung di objek current/hourly/daily.
-  const describe = (node: any): string => {
-    const raw = node?.weather?.[0]?.description;
-    if (typeof raw !== "string" || raw.length === 0) return "Tidak diketahui";
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
-  };
-
-  const transformData = (bffData: any): WeatherData | null => {
-    if (!bffData?.current) return null;
-
-    // visibility dari API dalam meter; UI menampilkan km.
-    const visibilityKm =
-      typeof bffData.current.visibility === "number"
-        ? Math.round(bffData.current.visibility / 1000)
-        : 0;
-
-    return {
-      location: bffData.location,
-      fetchedAt: Date.now(),
-      current: {
-        temp: Math.round(bffData.current.temp),
-        description: describe(bffData.current),
-        humidity: bffData.current.humidity,
-        wind_speed: Math.round(bffData.current.wind_speed),
-        pressure: bffData.current.pressure,
-        visibility: visibilityKm,
-        uvi: bffData.current.uvi,
-      },
-      hourly: (bffData.hourly ?? []).map((hour: any) => ({
-        dt: hour.dt * 1000,
-        temp: Math.round(hour.temp),
-        description: describe(hour),
-      })),
-      daily: (bffData.daily ?? []).map((day: any) => ({
-        dt: day.dt * 1000,
-        temp: { min: Math.round(day.temp.min), max: Math.round(day.temp.max) },
-        description: describe(day),
-      })),
-    };
-  };
-
-  const data = transformData(bffData);
+  }, [weather, apiError]);
 
   const formatTime = (dt: number): string => {
     const date = new Date(dt);
