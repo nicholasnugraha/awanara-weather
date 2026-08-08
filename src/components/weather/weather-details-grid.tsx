@@ -1,4 +1,4 @@
-import type { WeatherDetails as WeatherDetailsType } from "@/types/weather-data";
+import type { WeatherData } from "@/types/weather-data";
 
 export function WeatherDetailsGrid({ 
   humidity, 
@@ -6,7 +6,7 @@ export function WeatherDetailsGrid({
   pressure, 
   visibility,
   uvIndex 
-}: WeatherDetailsType) {
+}: Pick<WeatherData["current"], "humidity" | "wind_speed" | "pressure" | "visibility" | "uvi">) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
       <div className="rounded-lg bg-surface-card p-4 text-center shadow-sm">

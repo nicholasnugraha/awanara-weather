@@ -65,7 +65,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
           <SearchBar onCitySelect={handleCitySelect} />
           
           <div className="flex items-center gap-3">
-            <ThemeToggle currentTheme={theme ?? "light"} onToggle={() => {}} />
+            <ThemeToggle currentTheme={theme ?? "light" as any} onToggle={() => {}} />
             <GeolocateButton
               onLocationFound={(lat, lon, cityStr) => {
                 if (cityStr) {
