@@ -75,7 +75,9 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Parse with Zod (strict validation)
-    const parsedCurrent = parseZod(current[0], CurrentConditionsSchema);
+    // Response /current adalah OBJECT {lat, lon, timezone, data:[...]},
+    // bukan array. Jangan indeks [0] di sini — itu menghasilkan undefined.
+    const parsedCurrent = parseZod(current, CurrentConditionsSchema);
     const parsedHourly = parseZod(hourly, HourlyForecastSchema);
     const parsedDaily = parseZod(daily, DailyForecastSchema);
 
