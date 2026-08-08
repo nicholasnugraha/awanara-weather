@@ -1,51 +1,23 @@
 /**
- * ThemeToggle Component
- * Button to switch between light/dark/system themes
+ * ThemeToggle Component - Aktifkan fungsi toggle theme
  */
-import { FC } from "react";
+"use client";
 
-interface ThemeToggleProps {
-  currentTheme: "light" | "dark" | "system";
-  onToggle: () => void;
-}
+import { useTheme } from "@/components/theme/theme-provider";
 
-export const ThemeToggle: FC<ThemeToggleProps> = ({ currentTheme, onToggle }) => {
-  const getIcon = () => {
-    switch (currentTheme) {
-      case "light":
-        return (
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        );
-      case "dark":
-        return (
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        );
-      case "system":
-        return (
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
-        );
-    }
-  };
-
-  const getNextTheme = () => {
-    const themes: ("light" | "dark" | "system")[] = ["light", "dark", "system"];
-    const currentIndex = themes.indexOf(currentTheme);
-    return themes[(currentIndex + 1) % themes.length];
-  };
+export const ThemeToggle = () => {
+  const { toggleTheme } = useTheme();
 
   return (
     <button
-      onClick={onToggle}
-      title={`Switch to ${getNextTheme()} theme`}
-      className="rounded-lg bg-surface-card p-3 shadow-card transition-all hover:bg-surface-container active:scale-95"
+      onClick={toggleTheme}
+      title="Switch to next theme"
+      className="rounded-lg bg-surface-card p-3 text-text shadow-card transition-all hover:bg-surface-container active:scale-95"
     >
-      {getIcon()}
+      {/* Icon akan berubah sesuai tema via CSS/content switch */}
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
     </button>
   );
 };

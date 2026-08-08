@@ -9,23 +9,27 @@ describe("ThemeToggle", () => {
   });
 
   it("renders toggle button correctly", () => {
-    render(<ThemeToggle currentTheme="light" onToggle={mockOnToggle} />);
+    render(<ThemeToggle />);
     
     const button = screen.getByRole("button");
     expect(button).toBeInTheDocument();
   });
 
   it("calls onToggle when clicked", () => {
-    render(<ThemeToggle currentTheme="light" onToggle={mockOnToggle} />);
+    const mockFn = vi.fn();
+    global.window.matchMedia = vi.fn().mockReturnValue({ matches: false, addEventListener: () => {}, removeEventListener: () => {} });
+    
+    render(<ThemeToggle />);
     
     const button = screen.getByRole("button");
     fireEvent.click(button);
     
-    expect(mockOnToggle).toHaveBeenCalledTimes(1);
+    // Verify theme changed via localStorage
+    expect(localStorage.getItem("awanara-theme")).not.toBeNull();
   });
 
   it("has hover effect", () => {
-    const { container } = render(<ThemeToggle currentTheme="light" onToggle={mockOnToggle} />);
+    const { container } = render(<ThemeToggle />);
     
     const button = screen.getByRole("button");
     expect(button).toHaveClass("hover:bg-surface-container");

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CurrentWeatherHero } from "@/components/weather/current-weather-hero";
 import { HourlyForecastStrip } from "@/components/weather/hourly-forecast-strip";
 import { DailyForecastCard } from "@/components/weather/daily-forecast-card";
@@ -22,9 +22,25 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
   const [localData, setLocalData] = useState<WeatherData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Get toggle handler dari context (theme sebenarnya tidak dipakai karena context provider global)
-  const toggleHandler = () => {}; // Placeholder - diimplement later
-  
+  const handleCitySelect = async (selectedCity: string, lat?: number, lon?: number) => {
+    setCity(selectedCity);
+    
+    if (lat && lon) {
+      setCoords({ lat, lon });
+      return;
+    }
+    
+    const response = await fetch(`/api/geocode?q=${encodeURIComponent(selectedCity)}&limit=1`);
+    if (!response.ok) return;
+    
+    const results = await response.json();
+    if (results && results.length > 0) {
+      setCoords({ lat: results[0].lat, lon: results[0].lon });
+    } else {
+      alert("Kota tidak ditemukan");
+    }
+  };
+
   useEffect(() => {
     if (weather) {
       try {
@@ -32,29 +48,29 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
           location: weather.location,
           fetchedAt: Date.now(),
           current: {
-            temp: weather.current.temp,
+            temp: Math.round(weather.current.temp),
             description: weather.current.description.charAt(0).toUpperCase() + weather.current.description.slice(1),
             humidity: weather.current.humidity,
-            wind_speed: weather.current.wind_speed,
+            wind_speed: Math.round(weather.current.wind_speed),
             pressure: weather.current.pressure,
-            visibility: weather.current.visibility,
+            visibility: Math.round(weather.current.visibility / 1000),
             uvi: weather.current.uvi,
           },
           hourly: weather.hourly.map((hour) => ({
             dt: hour.dt * 1000,
-            temp: hour.temp,
+            temp: Math.round(hour.temp),
             description: hour.description.charAt(0).toUpperCase() + hour.description.slice(1),
           })),
           daily: weather.daily.map((day) => ({
             dt: day.dt * 1000,
-            temp: { min: day.temp.min, max: day.temp.max },
+            temp: { min: Math.round(day.temp.min), max: Math.round(day.temp.max) },
             description: day.description.charAt(0).toUpperCase() + day.description.slice(1),
           })),
         };
         
         setLocalData(transformed);
         setError(null);
-      } catch (err) {
+      } catch {
         setError("Failed to process weather data");
       }
     } else if (apiError) {
@@ -73,16 +89,13 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
     return days[date.getDay()]!;
   };
 
-  if (error || !data) {
+  if (error || !localData) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-surface p-4">
         <div className="text-center">
           <h1 className="mb-2 text-2xl font-bold text-text">Cuaca, dalam genggaman</h1>
           <p className="mb-4 text-danger">{error || "Gagal memuat data cuaca."}</p>
-          <button
-            onClick={reload}
-            className="rounded-lg bg-nav-active px-6 py-3 font-medium text-on-nav-active transition-colors hover:bg-brand-700"
-          >
+          <button onClick={reload} className="rounded-lg bg-nav-active px-6 py-3 font-medium text-on-nav-active transition-colors hover:bg-brand-700">
             Coba Lagi
           </button>
         </div>
@@ -90,7 +103,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
     );
   }
 
-  if (loading) {
+  if (apiLoading) {
     return (
       <main className="min-h-screen bg-surface p-4 md:p-6">
         <header className="mb-6 space-y-4">
@@ -98,11 +111,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
           <SearchBar onCitySelect={handleCitySelect} />
           <div className="h-8 w-64 animate-pulse rounded bg-surface-container" />
         </header>
-
-        <section className="mb-6">
-          <HeroSkeleton />
-        </section>
-
+        <section className="mb-6"><HeroSkeleton /></section>
         <section className="mb-6">
           <h2 className="mb-3 h-6 w-40 rounded bg-surface-container" />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -111,12 +120,10 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
             ))}
           </div>
         </section>
-
         <section className="mb-6">
           <h2 className="mb-3 h-6 w-52 rounded bg-surface-container" />
           <HourlyForecastStripSkeleton />
         </section>
-
         <section>
           <h2 className="mb-3 h-6 w-64 rounded bg-surface-container" />
           <div className="space-y-2">
@@ -135,20 +142,19 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         <h1 className="mb-4 text-2xl font-bold text-text">Cuaca, dalam genggaman</h1>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar onCitySelect={handleCitySelect} />
-          
-          <ThemeToggle currentTheme={theme} onToggle={() => {}} />
+          <ThemeToggle />
         </div>
         
         <div className="mt-4 flex items-center justify-between text-sm text-text-muted">
           <span>{city}</span>
-          <span>Diperbarui: {new Date(data.fetchedAt).toLocaleTimeString()}</span>
+          <span>Diperbarui: {new Date(localData.fetchedAt).toLocaleTimeString()}</span>
         </div>
       </header>
 
       <section className="mb-6">
         <CurrentWeatherHero 
-          temperature={data.current.temp}
-          condition={data.current.description}
+          temperature={localData.current.temp}
+          condition={localData.current.description}
           city={city}
         />
       </section>
@@ -156,18 +162,18 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
       <section className="mb-6">
         <h2 className="mb-3 text-lg font-semibold text-text">Detail Cuaca</h2>
         <WeatherDetailsGrid
-          humidity={data.current.humidity}
-          windSpeed={data.current.wind_speed}
-          pressure={data.current.pressure}
-          visibility={data.current.visibility}
-          uvIndex={data.current.uvi}
+          humidity={localData.current.humidity}
+          windSpeed={localData.current.wind_speed}
+          pressure={localData.current.pressure}
+          visibility={localData.current.visibility}
+          uvIndex={localData.current.uvi}
         />
       </section>
 
       <section className="mb-6">
         <h2 className="mb-3 text-lg font-semibold text-text">Jaman Berikutnya</h2>
         <HourlyForecastStrip 
-          hourlyForecasts={data.hourly.map(hour => ({
+          hourlyForecasts={localData.hourly.map(hour => ({
             time: formatTime(hour.dt),
             temperature: hour.temp,
             condition: hour.description,
@@ -178,7 +184,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
       <section>
         <h2 className="mb-3 text-lg font-semibold text-text">Prakiraan 4 Hari</h2>
         <div className="space-y-2">
-          {data.daily.map((day, index) => (
+          {localData.daily.map((day, index) => (
             <DailyForecastCard
               key={index}
               date={formatDate(day.dt)}
