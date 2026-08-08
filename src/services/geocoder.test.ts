@@ -51,33 +51,32 @@ describe("geocodeCity", () => {
     );
   });
 
-  test("uses cache on repeated calls", async () => {
-    const cachedResult = {
-      lat: -6.2,
-      lon: 106.8,
-      city: "Test City",
-      country: "Test Country",
-    };
+  test("caches successful results internally", async () => {
+    const mockResponse = [
+      {
+        lat: "-6.2087634",
+        lon: "106.8455992",
+        display_name: "Test City, Test Country",
+        address: {
+          city: "Test City",
+          country: "Test Country",
+        },
+      },
+    ];
 
-    const mockCache = {
-      get: vi.fn().mockResolvedValue(cachedResult),
-      set: vi.fn(),
-      clearAll: vi.fn(),
-    };
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => mockResponse,
+    } as Response);
 
-    // Override the cache getter temporarily
-    const originalGetCache = await import("../lib/cache");
-    const originalImpl = originalGetCache.getCache;
+    // First call - should hit API
+    const result1 = await geocodeCity({ city: "Test City", country: "TC" });
     
-    (originalGetCache as any).getCache = () => mockCache;
+    // Second call with same params - should use cache (no second fetch)
+    const result2 = await geocodeCity({ city: "Test City", country: "TC" });
 
-    try {
-      const result = await geocodeCity({ city: "Test City", country: "TC" });
-      expect(mockCache.get).toHaveBeenCalled();
-      expect(mockCache.set).not.toHaveBeenCalled();
-      expect(result).toBe(cachedResult);
-    } finally {
-      (originalGetCache as any).getCache = originalImpl;
-    }
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result1).toEqual(result2);
+    expect(result1.city).toBe("Test City");
   });
 });

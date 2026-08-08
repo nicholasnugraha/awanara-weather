@@ -26,23 +26,19 @@ describe("WeatherCache", () => {
     expect(expired).toBeNull();
   });
 
-  test("invalidation removes matching keys", async () => {
+  test("clearAll removes all keys", async () => {
     const key1 = cache.makeKey("current", "jakarta");
     const key2 = cache.makeKey("hourly", "jakarta");
-    const key3 = cache.makeKey("other", "something");
-
+    
     await cache.set(key1, { data: 1 }, 10000);
     await cache.set(key2, { data: [2] }, 10000);
-    await cache.set(key3, { data: 3 }, 10000);
 
-    await cache.invalidate("weather:current:*");
-    
+    await cache.clearAll();
+
     const remaining1 = await cache.get(key1);
     const remaining2 = await cache.get(key2);
-    const remaining3 = await cache.get(key3);
 
     expect(remaining1).toBeNull();
-    expect(remaining2).not.toBeNull();
-    expect(remaining3).not.toBeNull();
+    expect(remaining2).toBeNull();
   });
 });
