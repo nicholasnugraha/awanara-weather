@@ -1,38 +1,38 @@
-import type { WeatherData } from "@/types/weather-data";
+/**
+ * WeatherDetailsGrid Component
+ * Displays detailed weather metrics in a grid layout
+ */
+import { FC } from "react";
+import { MetricCard } from "./metric-card";
 
-export function WeatherDetailsGrid({ 
-  humidity, 
-  windSpeed, 
-  pressure, 
+interface WeatherDetailsGridProps {
+  humidity: number;
+  windSpeed: number;
+  pressure: number;
+  visibility: number;
+  uvIndex?: number;
+}
+
+export const WeatherDetailsGrid: FC<WeatherDetailsGridProps> = ({
+  humidity,
+  windSpeed,
+  pressure,
   visibility,
-  uvIndex 
-}: Pick<WeatherData["current"], "humidity" | "wind_speed" | "pressure" | "visibility" | "uvi">) {
+  uvIndex
+}) => {
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-      <div className="rounded-lg bg-surface-card p-4 text-center shadow-sm">
-        <p className="text-2xl font-bold text-text">{humidity}%</p>
-        <p className="text-xs text-text-muted">Kelembaban</p>
-      </div>
-      
-      <div className="rounded-lg bg-surface-card p-4 text-center shadow-sm">
-        <p className="text-2xl font-bold text-text">{windSpeed} m/s</p>
-        <p className="text-xs text-text-muted">Angin</p>
-      </div>
-      
-      <div className="rounded-lg bg-surface-card p-4 text-center shadow-sm">
-        <p className="text-2xl font-bold text-text">{pressure} hPa</p>
-        <p className="text-xs text-text-muted">Tekanan</p>
-      </div>
-      
-      <div className="hidden rounded-lg bg-surface-card p-4 text-center shadow-sm md:block">
-        <p className="text-2xl font-bold text-text">{visibility} km</p>
-        <p className="text-xs text-text-muted">Jarak Pandang</p>
-      </div>
-      
-      <div className="hidden rounded-lg bg-surface-card p-4 text-center shadow-sm md:block">
-        <p className="text-2xl font-bold text-text">{uvIndex}</p>
-        <p className="text-xs text-text-muted">UV Index</p>
-      </div>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <MetricCard label="Kelembaban" value={humidity} unit="%" />
+      <MetricCard label="Angin" value={windSpeed} unit="km/h" />
+      <MetricCard label="Tekanan" value={pressure} unit="hPa" />
+      <MetricCard label="Jarak Pandang" value={visibility} unit="km" />
+      {uvIndex !== undefined && (
+        <MetricCard 
+          label="Indeks UV" 
+          value={uvIndex.toFixed(1)} 
+          unit=""
+        />
+      )}
     </div>
   );
-}
+};

@@ -1,25 +1,33 @@
-import Image from "next/image";
+/**
+ * HourlyForecastStrip Component
+ * Horizontal scrollable strip showing next hours forecast
+ */
+import { FC } from "react";
 
-export function HourlyForecastStrip({ hourlyForecasts }: { hourlyForecasts: Array<{ time: string; temperature: number; condition: string }> }) {
+interface HourlyForecastItemProps {
+  time: string;
+  temperature: number;
+  condition: string;
+}
+
+interface HourlyForecastStripProps {
+  hourlyForecasts: HourlyForecastItemProps[];
+}
+
+export const HourlyForecastStrip: FC<HourlyForecastStripProps> = ({ 
+  hourlyForecasts 
+}) => {
   return (
-    <div className="rounded-lg bg-surface-card p-6 shadow-card">
-      <h3 className="mb-4 text-lg font-bold">24 Jam Kedepan</h3>
-      
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {hourlyForecasts.map((hour, index) => (
-          <div key={index} className="min-w-[80px] rounded-lg bg-surface-container p-3 text-center">
-            <p className="text-sm font-medium text-text-muted">{hour.time}</p>
-            <img 
-              src="https://openweathermap.org/img/wn/01d@2x.png" 
-              alt={hour.condition}
-              width={48}
-              height={48}
-              className="mx-auto my-3"
-            />
-            <p className="text-xl font-bold text-text">{hour.temperature}°</p>
+    <div className="overflow-x-auto pb-2">
+      <div className="flex gap-3 min-w-max">
+        {hourlyForecasts.map((hourly, index) => (
+          <div key={index} className="flex w-24 flex-col items-center rounded-lg bg-surface-card p-3 shadow-card">
+            <span className="text-xs font-medium text-text-muted">{hourly.time}</span>
+            <span className="my-2 text-xl font-semibold text-text">{hourly.temperature}°</span>
+            <span className="text-xs text-text-muted">{hourly.condition}</span>
           </div>
         ))}
       </div>
     </div>
   );
-}
+};
