@@ -1,0 +1,77 @@
+name: API Contract Tests
+
+on:
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - src/server/**/*.ts
+      - src/app/api/weather/route.ts
+      - src/app/api/geocode/route.ts
+
+jobs:
+  contract:
+    name: Validate OWM API response structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Set secret dari GH Secrets (OPENWEATHER_API_KEY)
+      - run: echo "OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }}" >> .env.secrets
+
+      # Kontrak: GET /api/weather harus HTTP 200 dan struktur sesuai
+      - name: Test OWM endpoints with real API key
+        run: |
+          export OPENWEATHER_API_KEY="${{ secrets.OPENWEATHER_API_KEY }}"
+          pnpm build
+
+          # Start server in background
+          pnpm start -p 3333 &
+          SERVER_PID=$!
+
+          # Wait for server to be ready (max 60 seconds)
+          echo "Waiting for server to start..."
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3333/ 2>/dev/null || echo "000")
+            if [ "$code" = "200" ]; then
+              echo "Server is ready (attempt $i)"
+              break
+            fi
+            echo "  Attempt $i: HTTP $code, waiting..."
+            sleep 2
+          done
+
+          # Verify server is actually up
+          if [ "$code" != "200" ]; then
+            echo "FAIL: Server did not start within 60 seconds"
+            kill $SERVER_PID 2>/dev/null || true
+            exit 1
+          fi
+
+          # Test Jakarta weather
+          echo "=== Testing Jakarta ==="
+          RESPONSE=$(curl -s --max-time 60 "http://localhost:3333/api/weather?lat=-6.2088&lon=106.8456")
+          echo "$RESPONSE" | python3 -m json.tool | head -200 || { echo "FAIL: invalid JSON or 500"; kill $SERVER_PID 2>/dev/null || true; exit 1; }
+
+          # Validate required fields exist
+          echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'location' in d; assert 'current' in d; assert 'hourly' in d; assert 'daily' in d"
+          echo "✅ Structure validated"
+
+          # Test geocoding
+          echo "=== Testing Geocoding ==="
+          curl -s --max-time 30 "http://localhost:3333/api/geocode?q=Bandung&limit=1" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); assert len(d)>=1; assert 'lat' in d[0]; assert 'lon' in d[0]"
+          echo "✅ Geocoding validated"
+
+          kill $SERVER_PID 2>/dev/null || true
+        env:
+          NODE_ENV: production

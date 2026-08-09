@@ -155,7 +155,7 @@ export const DashboardContainer = ({ theme }: { theme: Theme }) => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <SearchBar onCitySelect={handleCitySelect} />
           
-          <ThemeToggle currentTheme={theme} onToggle={() => {}} />
+          <ThemeToggle />
         </div>
         
         <div className="mt-4 flex items-center justify-between text-sm text-text-muted">
